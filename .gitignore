@@ -1,0 +1,5 @@
+*.swp
+*.pyc
+conf.py
+env/
+feeds.db

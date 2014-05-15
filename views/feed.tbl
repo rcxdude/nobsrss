@@ -1,0 +1,6 @@
+
+%for item in feed.items:
+<li> <a href={{item.link}}> {{item.title}} </a> </li>
+%end
+
+%rebase("boilerplate", title=feed.title)
