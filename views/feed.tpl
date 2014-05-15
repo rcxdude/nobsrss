@@ -8,6 +8,13 @@
     </form>
 </li>
 
+<li>
+    <form action="{{c.prefix}}/refresh" method="post">
+        <input type="hidden" name="feed_id" value="{{feed.feed_id}}">
+        <input type="submit" value="Refresh Feed">
+    </form>
+</li>
+
 <li> Feed URL: <a href="{{feed.feed_url}}"> {{feed.feed_url}} </a> </li>
 <li> Site URL: <a href="{{feed.site_url}}"> {{feed.site_url}} </a> </li>
 <li>

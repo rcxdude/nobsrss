@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 
 import bottle as b
+import subprocess
 import functools
 import datetime
 import binascii
@@ -87,6 +88,9 @@ def new():
 @b.view("unread")
 @auth_required
 def unread():
+    global fetch_process
+    db = sqlite3.connect(conf.database)
+    db.row_factory = sqlite3.Row
     c = db.cursor()
     c.execute("""SELECT * FROM feed_items JOIN feeds ON feed_items.feed = feeds.id
                     WHERE feed_items.read = 0 ORDER BY date(feed_items.date) DESC LIMIT 100""")
@@ -107,12 +111,15 @@ def unread():
         unread_feeds[row['feed']] = feed
     unread_feeds = unread_feeds.values()
     unread_feeds.sort(key=lambda x: x.sort_index)
-    return {'c': conf, 'unread_feeds': unread_feeds}
+    refreshing = fetch_process is not None and fetch_process.poll() is None
+    return {'c': conf, 'unread_feeds': unread_feeds, 'refreshing' : refreshing}
 
 @b.route(conf.prefix + "/feed/<feed_id>")
 @b.view("feed")
 @auth_required
 def feed(feed_id):
+    db = sqlite3.connect(conf.database)
+    db.row_factory = sqlite3.Row
     c = db.cursor()
     c.execute("""SELECT * FROM feeds WHERE ID = ?""", (feed_id,))
     row = c.fetchone()
@@ -138,6 +145,8 @@ def feed(feed_id):
 @b.view("status")
 @auth_required
 def status():
+    db = sqlite3.connect(conf.database)
+    db.row_factory = sqlite3.Row
     c = db.cursor()
     c.execute("""SELECT * FROM feed_status JOIN feeds ON feed_status.feed = feeds.id ORDER BY feeds.active, feed_status.last_error DESC""")
     return {'c': conf, 'statuses': c.fetchall()}
@@ -145,6 +154,8 @@ def status():
 @b.post(conf.prefix + "/mark_read")
 @auth_required
 def mark_read():
+    db = sqlite3.connect(conf.database)
+    db.row_factory = sqlite3.Row
     feed_id = b.request.forms.get("feed_id")
     c = db.cursor()
     if feed_id == 'all':
@@ -157,6 +168,8 @@ def mark_read():
 @b.post(conf.prefix + "/mark_active")
 @auth_required
 def mark_active():
+    db = sqlite3.connect(conf.database)
+    db.row_factory = sqlite3.Row
     feed_id = b.request.forms.get("feed_id")
     active = b.request.forms.get("active")
     c = db.cursor()
@@ -168,6 +181,8 @@ def mark_active():
 @b.post(conf.prefix + "/edit_feed")
 @auth_required
 def edit_feed():
+    db = sqlite3.connect(conf.database)
+    db.row_factory = sqlite3.Row
     feed_id = b.request.forms.get("feed_id")
     name = b.request.forms.get("name")
     feed_url = b.request.forms.get("feed_url")
@@ -181,6 +196,8 @@ def edit_feed():
 @b.post(conf.prefix + "/add_feed")
 @auth_required
 def add_feed():
+    db = sqlite3.connect(conf.database)
+    db.row_factory = sqlite3.Row
     name = b.request.forms.get("name")
     feed_url = b.request.forms.get("feed_url")
     site_url = b.request.forms.get("site_url")
@@ -191,12 +208,26 @@ def add_feed():
     db.commit()
     b.redirect(conf.prefix + "/feed/{}".format(feed_id))
 
+@b.post(conf.prefix + "/refresh")
+@auth_required
+def refresh():
+    global fetch_process
+    if fetch_process is None or fetch_process.poll() is not None:
+        feed_id = b.request.forms.get("feed_id")
+        cmd = ['./fetch_feeds.py']
+        if feed_id != "all":
+            cmd.extend(['--only-feed', feed_id, '--since', '0'])
+        fetch_process = subprocess.Popen(cmd)
+    b.redirect(conf.prefix + "/unread")
+
 @b.route(conf.prefix + "/css/<filename:path>")
 def css(filename):
     return b.static_file(filename, root="./css")
 
-db = sqlite3.connect(conf.database)
-db.row_factory = sqlite3.Row
+fetch_process = None
 
 b.debug(conf.debug)
-b.run(host=conf.host, port=conf.port)
+if conf.fastcgi:
+    b.run(host=conf.host, port=conf.port, server=b.FlupFCGIServer)
+else:
+    b.run(host=conf.host, port=conf.port)
