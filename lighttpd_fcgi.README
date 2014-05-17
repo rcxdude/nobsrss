@@ -1,0 +1,14 @@
+#Here's how to set up lighttpd to use nobsrss via fastcgi
+#make sure to enable "mod_fastcgi" and "mod_rewrite"
+
+#I dunno WTF is up with this part. Something in the fastCGI chain is being too
+#clever for its own good
+url.rewrite-once = ("^/rss/(.*)$" => "/rss/rss/rss/$1")
+
+fastcgi.server = (
+    "/rss/" => ((
+        "host" => "127.0.0.1",
+        "port" => 9000,
+        "check-local" => "disable",
+    ))
+)
