@@ -2,7 +2,7 @@
 <ul>
 %for status in statuses:
 <li>
-    <a href={{c.prefix}}/feed/{{status['feed']}}> {{status['name']}} </a>: 
+    <a href="{{c.prefix}}/feed/{{status['feed']}}"> {{status['name']}} </a>: 
 %if status['active'] == 0:
     INACTIVE
 %elif status['last_error'] is None:

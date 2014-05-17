@@ -24,7 +24,7 @@
 Items:
 <ul>
 %for item in feed.items:
-    <li> <a href={{item.link}}> {{item.title}} </a> ({{item.date}})</li>
+    <li> <a href="{{item.link}}"> {{item.title}} </a> ({{item.date}})</li>
 %end
 </ul>
 </div>
