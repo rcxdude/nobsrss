@@ -56,7 +56,7 @@ def auth_required(view):
         auth_cookie = b.request.get_cookie("auth")
         if auth_cookie in valid_auth_cookies:
             return view(*args, **kargs)
-        b.redirect(conf.prefix + "/auth?goto={}".format(b.request.url.replace("rss/rss/","")), 307)
+        b.redirect(conf.prefix + "/auth", 307)
     return auth_view
 
 def cursor():
@@ -67,7 +67,6 @@ def cursor():
 @b.route(conf.prefix + "/auth")
 @b.view("auth")
 def auth():
-    b.response.add_header('Set-Cookie', 'goto={}'.format(b.request.params.get('goto')))
     return {'c': conf}
 
 @b.post(conf.prefix + "/submit_auth")
@@ -80,7 +79,7 @@ def submit_auth():
         auth_token = binascii.b2a_hex(os.urandom(16))
         valid_auth_cookies.add(auth_token)
         b.response.add_header('Set-Cookie', 'auth={}'.format(auth_token))
-        b.redirect(b.request.get_cookie('goto'))
+        b.redirect(conf.prefix + "/unread")
     else:
         b.redirect(conf.prefix + "/auth")
 
