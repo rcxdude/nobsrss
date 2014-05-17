@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+import gzip_middleware
 import bottle as b
 import subprocess
 import threading
@@ -238,12 +239,18 @@ def css(filename):
 
 fetch_process = None
 
-t = threading.Thread(target=refresh_thread)
-t.daemon = True
-t.start()
+if conf.auto_fetch:
+    t = threading.Thread(target=refresh_thread)
+    t.daemon = True
+    t.start()
+
+app = b.app()
+
+if conf.compress:
+    app = gzip_middleware.Gzipper(app)
 
 b.debug(conf.debug)
 if conf.fastcgi:
-    b.run(host=conf.host, port=conf.port, server=b.FlupFCGIServer)
+    b.run(app, host=conf.host, port=conf.port, server=b.FlupFCGIServer)
 else:
-    b.run(host=conf.host, port=conf.port)
+    b.run(app, host=conf.host, port=conf.port)

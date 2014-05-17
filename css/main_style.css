@@ -142,9 +142,8 @@ input[type="text"] {
 
 .unread-feed {
     padding: 2px;
-    border-style: solid;
-    border-color: #444;
-    border-width: 2px;
+    margin: 2px;
+    border-top: 2px solid #444;
 }
 
 .feed-item-list {
