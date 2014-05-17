@@ -2,11 +2,13 @@
 
 import bottle as b
 import subprocess
+import threading
 import functools
 import datetime
 import binascii
 import sqlite3
 import hashlib
+import time
 import os
 
 import conf
@@ -51,7 +53,7 @@ def auth_required(view):
         auth_cookie = b.request.get_cookie("auth")
         if auth_cookie in valid_auth_cookies:
             return view(*args, **kargs)
-        b.redirect(conf.prefix + "/auth?goto={}".format(b.request.url), 307)
+        b.redirect(conf.prefix + "/auth?goto={}".format(b.request.url.replace("rss/rss/","")), 307)
     return auth_view
 
 @b.route(conf.prefix + "/auth")
@@ -208,23 +210,37 @@ def add_feed():
     db.commit()
     b.redirect(conf.prefix + "/feed/{}".format(feed_id))
 
+def run_refresh(feed_id = None):
+    global fetch_process
+    if fetch_process is None or fetch_process.poll() is not None:
+        cmd = ['./fetch_feeds.py']
+        if feed_id is not None:
+            cmd.extend(['--only-feed', feed_id, '--since', '0'])
+        fetch_process = subprocess.Popen(cmd)
+
 @b.post(conf.prefix + "/refresh")
 @auth_required
 def refresh():
-    global fetch_process
-    if fetch_process is None or fetch_process.poll() is not None:
-        feed_id = b.request.forms.get("feed_id")
-        cmd = ['./fetch_feeds.py']
-        if feed_id != "all":
-            cmd.extend(['--only-feed', feed_id, '--since', '0'])
-        fetch_process = subprocess.Popen(cmd)
+    feed_id = b.request.forms.get("feed_id")
+    if feed_id == 'all':
+        feed_id = None
+    run_refresh(feed_id)
     b.redirect(conf.prefix + "/unread")
+
+def refresh_thread():
+    while True:
+        run_refresh()
+        time.sleep(1800)
 
 @b.route(conf.prefix + "/css/<filename:path>")
 def css(filename):
     return b.static_file(filename, root="./css")
 
 fetch_process = None
+
+t = threading.Thread(target=refresh_thread)
+t.daemon = True
+t.start()
 
 b.debug(conf.debug)
 if conf.fastcgi:
