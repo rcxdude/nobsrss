@@ -1,14 +1,16 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 import gzip_middleware
 import bottle as b
 import subprocess
 import threading
 import functools
+import setup_db
 import datetime
 import binascii
 import sqlite3
 import hashlib
+import pbkdf2
 import time
 import os
 
@@ -57,6 +59,11 @@ def auth_required(view):
         b.redirect(conf.prefix + "/auth?goto={}".format(b.request.url.replace("rss/rss/","")), 307)
     return auth_view
 
+def cursor():
+    db = sqlite3.connect(conf.database)
+    db.row_factory = sqlite3.Row
+    return db.cursor()
+
 @b.route(conf.prefix + "/auth")
 @b.view("auth")
 def auth():
@@ -66,7 +73,10 @@ def auth():
 @b.post(conf.prefix + "/submit_auth")
 def submit_auth():
     password = b.request.forms.get('password')
-    if hashlib.sha256(password).hexdigest() == conf.password_sha256:
+    c = cursor()
+    c.execute("SELECT * from passwords WHERE user = ?", ("user",))
+    pw_hash = c.fetchone()['password']
+    if pbkdf2.check_hash(password, pw_hash):
         auth_token = binascii.b2a_hex(os.urandom(16))
         valid_auth_cookies.add(auth_token)
         b.response.add_header('Set-Cookie', 'auth={}'.format(auth_token))
@@ -236,6 +246,8 @@ def refresh_thread():
 @b.route(conf.prefix + "/css/<filename:path>")
 def css(filename):
     return b.static_file(filename, root="./css")
+
+setup_db.create_tables()
 
 fetch_process = None
 

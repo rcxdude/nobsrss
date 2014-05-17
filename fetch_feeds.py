@@ -1,10 +1,12 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 import sqlite3
 import datetime
 import argparse
 import traceback
 import feedparser
+
+import setup_db
 
 def convert_timestamp(val):
     datepart, timepart = val.split(" ")
@@ -81,31 +83,6 @@ def update_all(args):
         db.commit()
     c.close()
 
-def create_tables():
-    db = sqlite3.connect("feeds.db")
-    c = db.cursor()
-    c.execute("""CREATE TABLE IF NOT EXISTS
-                feed_items ( id INTEGER PRIMARY KEY,
-                             feed INTEGER NOT NULL,
-                             title TEXT,
-                             link TEXT,
-                             item_id TEXT,
-                             date DATETIME,
-                             read BOOL,
-                             UNIQUE (feed, item_id) ON CONFLICT IGNORE,
-                             FOREIGN KEY(feed) REFERENCES feeds(id) )""")
-    c.execute("""CREATE INDEX IF NOT EXISTS idx_item_id ON feed_items(feed, item_id)""")
-    c.execute("""CREATE INDEX IF NOT EXISTS idx_unread ON feed_items(read)""")
-    c.execute("""CREATE TABLE IF NOT EXISTS
-                feed_status ( id INTEGER PRIMARY KEY,
-                              feed INTEGER UNIQUE NOT NULL,
-                              last_fetch DATETIME,
-                              bozo BOOL,
-                              last_error TEXT,
-                              FOREIGN KEY(feed) REFERENCES feeds(id) )""")
-    c.close()
-    db.commit()
-
 parser = argparse.ArgumentParser(description="fetch feeds into database")
 parser.add_argument("--since", default=30, type=int, 
     help="how out of date fetched feeds need to be before they are fetched")
@@ -115,5 +92,5 @@ parser.add_argument("--no-create", help="Don't create any tables", action="store
 args = parser.parse_args()
 
 if not args.no_create:
-    create_tables()
+    setup_db.create_tables()
 update_all(args)

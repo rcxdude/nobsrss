@@ -1,9 +1,11 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 import sys
 import json
 import sqlite3
 import argparse
+
+import conf
 
 parser = argparse.ArgumentParser(
     description="Import feeds from firefox json backup into sqlite database")
@@ -59,7 +61,7 @@ feeds = get_feeds(folder)
 
 print feeds
 
-db = sqlite3.connect("feeds.db")
+db = sqlite3.connect(conf.database)
 c = db.cursor()
 
 c.execute("""CREATE TABLE IF NOT EXISTS
