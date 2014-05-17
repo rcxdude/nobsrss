@@ -2,8 +2,8 @@
 .header {
     background: none repeat scroll 0 0 #3A3A3A;
     color: #EEE;
-    height: 30px;
     line-height: 30px;
+    overflow: auto;
 }
 
 .header a {
@@ -18,6 +18,7 @@
 
 .header-menu ul {
     display: inline;
+    margin: 0px;
 }
 
 .header-menu li a {
@@ -30,7 +31,6 @@
 .header-menu li a:hover {
     background: none repeat scroll 0 0 #000000;
 }
-
 
 .header li {
     list-style: none outside none;
@@ -91,14 +91,68 @@
     padding: 0px 10px;
 }
 
-.inline-form {
+.mark-feed-read {
     display: inline;
     float: right;
     padding: 3px;
 }
 
+a {
+    text-decoration: none;
+}
+
+a:link {
+    color: #44a;
+}
+
+a:hover {
+    color: #d11;
+}
+
+a:visited {
+    color: #aaa;
+}
+
+input[type="submit"] {
+    background-color: #333;
+    color: #ddd;
+    border: none;
+    padding: 4px 8px 4px 8px;
+    margin: 3px;
+    border-radius: 2px;
+}
+
+.button-form {
+    display: inline;
+}
+
+input[type="text"] {
+    border-style: solid;
+    border-width: 1px;
+    border-color: #555;
+    margin: 2px;
+    width: 80%;
+}
+
+.edit-form {
+    background-color: #ccc;
+    padding: 5px;
+    padding-left: 40px;
+}
+
+.unread-feed {
+    padding: 2px;
+    border-style: solid;
+    border-color: #444;
+    border-width: 2px;
+}
+
+.feed-item-list {
+    margin: 10px;
+}
+
 .error {
     display: block;
     padding: 10px;
-    background: #CCC;
+    background: #fcc;
 }
