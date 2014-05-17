@@ -28,4 +28,7 @@
 %end
 </ul>
 
-%rebase("boilerplate", title='Unread')
+%n_unread = sum([len(feed.items) for feed in unread_feeds])
+%title = 'Unread' + (' ({})'.format(n_unread) if n_unread else '')
+
+%rebase("boilerplate", title=title, refresh_time=600)

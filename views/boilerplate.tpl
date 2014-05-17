@@ -9,6 +9,9 @@
         <title>{{title}}</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        %if defined('refresh_time'):
+        <meta http-equiv="refresh" content="{{refresh_time}}">
+        %end
 
         <link rel="stylesheet" href="{{c.prefix}}/css/normalize.css">
         <link rel="stylesheet" href="{{c.prefix}}/css/main.css">
