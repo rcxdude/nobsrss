@@ -70,7 +70,6 @@ def update_all(args):
             date = convert_timestamp(r['last_fetch'])
             if datetime.datetime.now() - date < datetime.timedelta(minutes=args.since):
                 continue
-            print(date, type(date))
         try:
             f = update_feed(c, row['id'], row['name'], row['feed_uri'])
             c.execute("INSERT OR REPLACE INTO feed_status VALUES(NULL, ?, ?, ?, NULL)",
