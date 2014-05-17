@@ -16,6 +16,7 @@ import os
 
 import conf
 
+#copied from sqlite3/dbapi2.py
 def convert_timestamp(val):
     datepart, timepart = val.split(" ")
     year, month, day = map(int, datepart.split("-"))
@@ -62,7 +63,7 @@ def auth_required(view):
 def cursor():
     db = sqlite3.connect(conf.database)
     db.row_factory = sqlite3.Row
-    return db.cursor()
+    return db.cursor(), db
 
 @b.route(conf.prefix + "/auth")
 @b.view("auth")
@@ -72,7 +73,7 @@ def auth():
 @b.post(conf.prefix + "/submit_auth")
 def submit_auth():
     password = b.request.forms.get('password')
-    c = cursor()
+    c, db = cursor()
     c.execute("SELECT * from passwords WHERE user = ?", ("user",))
     pw_hash = c.fetchone()['password']
     if pbkdf2.check_hash(password, pw_hash):
@@ -101,11 +102,11 @@ def new():
 @auth_required
 def unread():
     global fetch_process
-    db = sqlite3.connect(conf.database)
-    db.row_factory = sqlite3.Row
-    c = db.cursor()
-    c.execute("""SELECT * FROM feed_items JOIN feeds ON feed_items.feed = feeds.id
-                    WHERE feed_items.read = 0 ORDER BY date(feed_items.date) DESC LIMIT 100""")
+    c, db = cursor()
+    c.execute("""SELECT * FROM feed_items JOIN feeds 
+                    ON feed_items.feed = feeds.id
+                    WHERE feed_items.read = 0 
+                    ORDER BY date(feed_items.date) DESC LIMIT 100""")
     unread_feeds = {}
     for i, row in enumerate(c):
         feed = unread_feeds.get(row['feed'], Feed(row['feed'],
@@ -130,9 +131,7 @@ def unread():
 @b.view("feed")
 @auth_required
 def feed(feed_id):
-    db = sqlite3.connect(conf.database)
-    db.row_factory = sqlite3.Row
-    c = db.cursor()
+    c, db = cursor()
     c.execute("""SELECT * FROM feeds WHERE ID = ?""", (feed_id,))
     row = c.fetchone()
     if not row:
@@ -143,7 +142,8 @@ def feed(feed_id):
                 row['site_uri'],
                 row['active'],
                 [], None)
-    c.execute("""SELECT * FROM feed_items WHERE feed = ? ORDER BY date(feed_items.date) DESC LIMIT 40""", (feed_id,))
+    c.execute("""SELECT * FROM feed_items WHERE feed = ? 
+                 ORDER BY date(feed_items.date) DESC LIMIT 40""", (feed_id,))
     for row in c:
         feed.items.append(FeedItem(row['id'],
                                    row['title'],
@@ -157,19 +157,17 @@ def feed(feed_id):
 @b.view("status")
 @auth_required
 def status():
-    db = sqlite3.connect(conf.database)
-    db.row_factory = sqlite3.Row
-    c = db.cursor()
-    c.execute("""SELECT * FROM feed_status JOIN feeds ON feed_status.feed = feeds.id ORDER BY feeds.active, feed_status.last_error DESC""")
+    c, db = cursor()
+    c.execute("""SELECT * FROM feed_status JOIN feeds 
+                 ON feed_status.feed = feeds.id
+                 ORDER BY feeds.active, feed_status.last_error DESC""")
     return {'c': conf, 'statuses': c.fetchall()}
 
 @b.post(conf.prefix + "/mark_read")
 @auth_required
 def mark_read():
-    db = sqlite3.connect(conf.database)
-    db.row_factory = sqlite3.Row
+    c, db = cursor()
     feed_id = b.request.forms.get("feed_id")
-    c = db.cursor()
     if feed_id == 'all':
         c.execute("""UPDATE feed_items SET read = 1""")
     else:
@@ -180,11 +178,9 @@ def mark_read():
 @b.post(conf.prefix + "/mark_active")
 @auth_required
 def mark_active():
-    db = sqlite3.connect(conf.database)
-    db.row_factory = sqlite3.Row
+    c, db = cursor()
     feed_id = b.request.forms.get("feed_id")
     active = b.request.forms.get("active")
-    c = db.cursor()
     c.execute("""UPDATE feeds SET active = ? WHERE id = ? """, 
             ({"false": 0, "true": 1}[active], feed_id))
     db.commit()
@@ -193,13 +189,11 @@ def mark_active():
 @b.post(conf.prefix + "/edit_feed")
 @auth_required
 def edit_feed():
-    db = sqlite3.connect(conf.database)
-    db.row_factory = sqlite3.Row
+    c, db = cursor()
     feed_id = b.request.forms.get("feed_id")
     name = b.request.forms.get("name")
     feed_url = b.request.forms.get("feed_url")
     site_url = b.request.forms.get("site_url")
-    c = db.cursor()
     c.execute("""UPDATE feeds SET name=?, feed_uri=?, site_uri=? WHERE id = ?""",
                (name, feed_url, site_url, feed_id))
     db.commit()
@@ -208,12 +202,10 @@ def edit_feed():
 @b.post(conf.prefix + "/add_feed")
 @auth_required
 def add_feed():
-    db = sqlite3.connect(conf.database)
-    db.row_factory = sqlite3.Row
+    c, db = cursor()
     name = b.request.forms.get("name")
     feed_url = b.request.forms.get("feed_url")
     site_url = b.request.forms.get("site_url")
-    c = db.cursor()
     c.execute("""INSERT INTO feeds VALUES (NULL,?,?,?,1)""",
                (name, feed_url, site_url))
     feed_id = c.lastrowid
