@@ -235,6 +235,10 @@ def refresh_thread():
 def css(filename):
     return b.static_file(filename, root="./css")
 
+@b.route(conf.prefix + "/images/<filename:path>")
+def imsages(filename):
+    return b.static_file(filename, root="./images")
+
 setup_db.create_tables()
 
 fetch_process = None

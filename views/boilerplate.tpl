@@ -15,6 +15,7 @@
         <link rel="stylesheet" href="{{c.prefix}}/css/normalize.css">
         <link rel="stylesheet" href="{{c.prefix}}/css/main.css">
         <link rel="stylesheet" href="{{c.prefix}}/css/main_style.css">
+        <link rel="shortcut icon" href="{{c.prefix}}/images/favicon.png">
     </head>
     <body>
         <!--[if lt IE 7]>
