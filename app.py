@@ -167,11 +167,8 @@ def status():
 @auth_required
 def mark_read():
     c, db = cursor()
-    feed_id = b.request.forms.get("feed_id")
-    if feed_id == 'all':
-        c.execute("""UPDATE feed_items SET read = 1""")
-    else:
-        c.execute("""UPDATE feed_items SET read = 1 WHERE feed = ?""", (feed_id,))
+    feed_ids = [(i,) for i in b.request.forms.get("feed_id").split(",")]
+    c.executemany("""UPDATE feed_items SET read = 1 WHERE feed = ?""", feed_ids)
     db.commit()
     b.redirect(conf.prefix + "/unread")
 

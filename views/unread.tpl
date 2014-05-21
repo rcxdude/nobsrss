@@ -1,6 +1,6 @@
 
 <form class="button-form" action="{{c.prefix}}/mark_read" method="post">
-    <input type="hidden" name="feed_id" value="all">
+    <input type="hidden" name="feed_id" value="{{",".join([str(u.feed_id) for u in unread_feeds])}}">
     <input type="submit" value="Mark all read">
 </form>
 
