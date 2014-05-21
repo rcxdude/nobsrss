@@ -5,6 +5,7 @@ import datetime
 import argparse
 import traceback
 import feedparser
+import socket
 
 import setup_db
 
@@ -87,8 +88,11 @@ parser.add_argument("--since", default=30, type=int,
     help="how out of date fetched feeds need to be before they are fetched")
 parser.add_argument("--only-feed", help="fetch this feed only")
 parser.add_argument("--no-create", help="Don't create any tables", action="store_true")
+parser.add_argument("--timeout", type=int, default=30, help='fetch timeout in seconds (0 = none)')
 
 args = parser.parse_args()
+
+socket.setdefaulttimeout(args.timeout if args.timeout else None)
 
 if not args.no_create:
     setup_db.create_tables()
