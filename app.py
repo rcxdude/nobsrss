@@ -106,7 +106,7 @@ def unread():
     c.execute("""SELECT * FROM feed_items JOIN feeds 
                     ON feed_items.feed = feeds.id
                     WHERE feed_items.read = 0 
-                    ORDER BY date(feed_items.date) DESC LIMIT 100""")
+                    ORDER BY date(feed_items.date) DESC LIMIT 500""")
     unread_feeds = {}
     for i, row in enumerate(c):
         feed = unread_feeds.get(row['feed'], Feed(row['feed'],
@@ -143,7 +143,7 @@ def feed(feed_id):
                 row['active'],
                 [], None)
     c.execute("""SELECT * FROM feed_items WHERE feed = ? 
-                 ORDER BY date(feed_items.date) DESC LIMIT 40""", (feed_id,))
+                 ORDER BY date(feed_items.date) DESC LIMIT 200""", (feed_id,))
     for row in c:
         feed.items.append(FeedItem(row['id'],
                                    row['title'],
